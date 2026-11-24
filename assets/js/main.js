@@ -100,6 +100,167 @@
     });
   }
 
+  /* 47-Service Catalog Filtering & Search (treatments.html) */
+  const catalog = $("#servicesCatalog");
+  if (catalog) {
+    const pills = $$(".filter-pill", $("#serviceFilterPills"));
+    const searchInput = $("#serviceSearch");
+    const clearBtn = $("#serviceSearchClear");
+    const countEl = $("#serviceMatchCount");
+    const emptyEl = $("#serviceEmptyState");
+    const resetBtn = $("#serviceResetFilters");
+    const sections = $$(".service-category-section", catalog);
+    let activeCat = "all";
+
+    const updateCatalog = (scrollToCat = false) => {
+      const q = (searchInput ? searchInput.value : "").trim().toLowerCase();
+      if (clearBtn) clearBtn.classList.toggle("d-none", !q);
+      let visibleTotal = 0;
+
+      sections.forEach((sec) => {
+        const secCat = sec.dataset.catSection;
+        const catMatches = activeCat === "all" || activeCat === secCat;
+        let secVisible = 0;
+        $$(".service-item", sec).forEach((cardCol) => {
+          const text = (cardCol.dataset.searchText || cardCol.textContent).toLowerCase();
+          const show = catMatches && (!q || text.includes(q));
+          cardCol.classList.toggle("is-hidden", !show);
+          if (show) {
+            secVisible++;
+            visibleTotal++;
+          }
+        });
+        sec.classList.toggle("is-hidden", secVisible === 0);
+      });
+
+      pills.forEach((btn) => {
+        const on = btn.dataset.catFilter === activeCat;
+        btn.classList.toggle("active", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+
+      if (countEl) {
+        countEl.textContent = q
+          ? `Showing ${visibleTotal} of 47 services for "${searchInput.value.trim()}"`
+          : activeCat === "all"
+            ? `Showing all 47 services across 4 categories`
+            : `Showing ${visibleTotal} services`;
+      }
+      if (emptyEl) emptyEl.classList.toggle("d-none", visibleTotal > 0);
+
+      if (scrollToCat && activeCat !== "all") {
+        const targetSec = document.getElementById(activeCat);
+        if (targetSec) setTimeout(() => targetSec.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+      }
+    };
+
+    pills.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeCat = btn.dataset.catFilter;
+        updateCatalog(false);
+        if (activeCat === "all") {
+          history.replaceState(null, "", "treatments.html");
+        } else {
+          history.replaceState(null, "", "#" + activeCat);
+        }
+      });
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener("input", () => updateCatalog(false));
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        updateCatalog(false);
+        searchInput.focus();
+      });
+    }
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        activeCat = "all";
+        if (searchInput) searchInput.value = "";
+        updateCatalog(false);
+      });
+    }
+
+    const applyHash = () => {
+      const h = location.hash.replace("#", "");
+      if (h && pills.some((b) => b.dataset.catFilter === h)) {
+        activeCat = h;
+        updateCatalog(true);
+      } else {
+        activeCat = "all";
+        updateCatalog(false);
+      }
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+  }
+
+  /* Reusable Service Detail Page renderer (service-detail.html) */
+  const detailRoot = $("#serviceDetailRoot");
+  if (detailRoot && Array.isArray(window.OMYRA_SERVICES)) {
+    const slug = new URLSearchParams(location.search).get("service");
+    const srv = window.OMYRA_SERVICES.find((s) => s.slug === slug) || window.OMYRA_SERVICES[0];
+    const cat = (window.OMYRA_CATEGORIES || []).find((c) => c.id === srv.category);
+
+    document.title = `${srv.name} – OMYRA | ${srv.categoryLabel}`;
+    const setText = (sel, val) => { const el = $(sel); if (el) el.textContent = val; };
+    setText("#sdBreadcrumbCat", srv.categoryLabel);
+    setText("#sdBreadcrumbName", srv.name);
+    const bcCat = $("#sdBreadcrumbCat");
+    if (bcCat) bcCat.href = "treatments.html#" + srv.category;
+    setText("#sdCategoryBadge", srv.categoryLabel);
+    setText("#sdTitle", srv.name);
+    setText("#sdShortDesc", srv.shortDesc);
+    setText("#sdOverview", srv.overview);
+    setText("#sdSessionInfo", srv.sessionInfo);
+    setText("#sdApproach", srv.approach);
+
+    const imgEl = $("#sdImage");
+    if (imgEl) { imgEl.src = srv.img + "?v=34"; imgEl.alt = srv.name; }
+
+    const bookBtn = $("#sdBookBtn");
+    if (bookBtn) bookBtn.href = "consultation.html?treatment=" + encodeURIComponent(srv.slug);
+    const backBtn = $("#sdBackBtn");
+    if (backBtn) {
+      backBtn.href = "treatments.html#" + srv.category;
+      backBtn.innerHTML = `<i class="bi bi-arrow-left"></i> All ${cat ? cat.shortTitle : srv.categoryLabel}`;
+    }
+
+    const listEl = $("#sdHighlights");
+    if (listEl) {
+      listEl.innerHTML = srv.highlights
+        .map((h) => `<li><i class="bi bi-check2"></i><span>${h}</span></li>`)
+        .join("");
+    }
+
+    const relGrid = $("#sdRelatedGrid");
+    const relHeading = $("#sdRelatedHeading");
+    if (relHeading) relHeading.textContent = `More ${srv.categoryLabel}`;
+    if (relGrid) {
+      const siblings = window.OMYRA_SERVICES.filter((s) => s.category === srv.category && s.slug !== srv.slug).slice(0, 4);
+      relGrid.innerHTML = siblings.map((item) => `
+        <div class="col-sm-6 col-lg-3">
+          <article class="treatment-card service-catalog-card">
+            <div class="media">
+              <img src="${item.img}?v=34" alt="${item.name.replace(/"/g, "&quot;")}" loading="lazy">
+              <span class="tag">${cat ? cat.shortTitle : item.categoryLabel}</span>
+            </div>
+            <div class="body">
+              <h3>${item.name}</h3>
+              <p class="desc">${item.shortDesc}</p>
+              <div class="service-card-actions">
+                <a class="link-arrow" href="service-detail.html?service=${encodeURIComponent(item.slug)}">View Details <i class="bi bi-arrow-right"></i></a>
+              </div>
+            </div>
+          </article>
+        </div>
+      `).join("");
+    }
+  }
+
   /* Gallery lightbox */
   const lbEl = $("#lightboxModal");
   if (lbEl && window.bootstrap) {
