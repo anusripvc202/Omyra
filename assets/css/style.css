@@ -1423,6 +1423,12 @@ textarea.form-control { min-height: 130px; resize: vertical; }
   .hero-badge.b-2 { display: none; }
   .hero-badge.b-1 { left: 50%; transform: translateX(-50%); bottom: 6.2rem; white-space: nowrap; }
   .home-hero-media .arch-frame { width: 86%; }
+  /* 2-per-row mobile service cards: balanced compact sizing */
+  .service-card { border-radius: 16px; padding: .45rem .45rem .95rem; }
+  .service-card .media { border-radius: 12px 12px 50% 50% / 12px 12px 16px 16px; aspect-ratio: 16/11; margin-bottom: .65rem; }
+  .service-card h3 { font-size: 1.02rem !important; margin-bottom: .2rem !important; }
+  .service-card p { font-size: .75rem; margin-bottom: .45rem; line-height: 1.35; }
+  .service-card .link-arrow { font-size: .74rem; }
   .gallery-grid { columns: 1; }
   .omyra-card { padding: 1.6rem; }
   .filter-pill { padding: .48rem 1rem; font-size: .82rem; }
