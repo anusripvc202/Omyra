@@ -378,8 +378,107 @@
   /* Close mobile menu after choosing an in-page link */
   const nav = $("#mainNav");
   if (nav && window.bootstrap) {
-    $$(".nav-link, .dropdown-item", nav).forEach((a) => a.addEventListener("click", () => {
+    $$(".nav-link, .dropdown-item, .mega-mob-list a", nav).forEach((a) => a.addEventListener("click", () => {
       if (nav.classList.contains("show") && a.getAttribute("href") && a.getAttribute("href").includes("#")) bootstrap.Collapse.getOrCreateInstance(nav).hide();
     }));
+  }
+
+  /* Treatments Multi-Level Mega Menu (Desktop hover/click + Mobile Accordion) */
+  const megaItem = $(".nav-item.has-mega");
+  if (megaItem) {
+    const toggleBtn = $(".mega-toggle", megaItem);
+    const navLink = $(":scope > .nav-link", megaItem);
+    const catBtns = $$(".mega-cat-btn", megaItem);
+    const panes = $$(".mega-pane", megaItem);
+    const mobCats = $$(".mega-mob-cat", megaItem);
+    let closeTimer = null;
+
+    const isDesktop = () => window.innerWidth >= 1200;
+
+    const setActiveCat = (catId) => {
+      catBtns.forEach((b) => {
+        const on = b.dataset.megaCat === catId;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      panes.forEach((p) => p.classList.toggle("active", p.dataset.megaPane === catId));
+    };
+
+    const openMega = () => {
+      clearTimeout(closeTimer);
+      megaItem.classList.add("mega-open");
+      toggleBtn && toggleBtn.setAttribute("aria-expanded", "true");
+    };
+
+    const closeMega = (immediate = false) => {
+      clearTimeout(closeTimer);
+      const hide = () => {
+        megaItem.classList.remove("mega-open");
+        toggleBtn && toggleBtn.setAttribute("aria-expanded", "false");
+      };
+      if (immediate) hide();
+      else closeTimer = setTimeout(hide, 140);
+    };
+
+    // Desktop hover open/close with forgiving bridge delay
+    megaItem.addEventListener("mouseenter", () => { if (isDesktop()) openMega(); });
+    megaItem.addEventListener("mouseleave", () => { if (isDesktop()) closeMega(false); });
+
+    // Click chevron toggle (desktop & mobile)
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (megaItem.classList.contains("mega-open")) closeMega(true);
+        else openMega();
+      });
+    }
+
+    // On mobile, tapping Treatments text opens accordion if closed; second tap goes to treatments.html
+    if (navLink) {
+      navLink.addEventListener("click", (e) => {
+        if (!isDesktop() && !megaItem.classList.contains("mega-open")) {
+          e.preventDefault();
+          openMega();
+        }
+      });
+    }
+
+    // Desktop 1st-level category hover & click switches 2nd-level nested panel
+    catBtns.forEach((btn) => {
+      btn.addEventListener("mouseenter", () => { if (isDesktop()) setActiveCat(btn.dataset.megaCat); });
+      btn.addEventListener("focus", () => { if (isDesktop()) { openMega(); setActiveCat(btn.dataset.megaCat); } });
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        setActiveCat(btn.dataset.megaCat);
+      });
+    });
+
+    // Mobile expandable accordion per category
+    mobCats.forEach((box) => {
+      const trig = $(".mega-mob-trigger", box);
+      if (!trig) return;
+      trig.addEventListener("click", (e) => {
+        e.preventDefault();
+        const willOpen = !box.classList.contains("open");
+        mobCats.forEach((other) => {
+          other.classList.remove("open");
+          const ot = $(".mega-mob-trigger", other);
+          ot && ot.setAttribute("aria-expanded", "false");
+        });
+        if (willOpen) {
+          box.classList.add("open");
+          trig.setAttribute("aria-expanded", "true");
+        }
+      });
+    });
+
+    // Close on outside click or Escape key
+    document.addEventListener("click", (e) => {
+      if (!megaItem.contains(e.target)) closeMega(true);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeMega(true);
+    });
   }
 })();
