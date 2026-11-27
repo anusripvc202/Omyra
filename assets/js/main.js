@@ -100,7 +100,49 @@
     });
   }
 
-  /* 47-Service Catalog Filtering & Search (treatments.html) */
+  /* 5-Group Catalog Filtering, Search & Extensible Group 5 Rendering (treatments.html) */
+  const renderGroup5Cards = (gridEl, subcat, prefix = "") => {
+    if (!gridEl || !subcat || !Array.isArray(subcat.services) || subcat.services.length === 0) return;
+    const extraHtml = subcat.services.map((item) => {
+      const detailHref = item.detailUrl
+        ? `${prefix}${item.detailUrl}`
+        : `${prefix}service-detail.html?service=${encodeURIComponent(item.slug)}`;
+      const consultHref = `${prefix}consultation.html?treatment=${encodeURIComponent(item.slug || subcat.consultationSlug)}`;
+      const safeName = (item.name || "").replace(/"/g, "&quot;");
+      const imgSrc = item.img ? `${prefix}${item.img}?v=38` : `${prefix}${subcat.img}?v=38`;
+      return `
+        <div class="col-md-6 col-lg-4 service-item" data-category="yoniveda-garbha-sanskar" data-subcategory="${subcat.id}" data-search-text="${safeName} ${(item.shortDesc || "").replace(/"/g, "&quot;")} ${subcat.name} YONIVEDA GARBHA SANSKAR">
+          <article class="g5-feature-card">
+            <div class="media">
+              <img src="${imgSrc}" alt="${safeName}" loading="lazy">
+              <span class="tag">${subcat.name}</span>
+            </div>
+            <div class="body">
+              <h4>${item.name}</h4>
+              <p class="desc">${item.shortDesc || ""}</p>
+              <div class="g5-card-btn-row">
+                <a class="btn-omyra-outline" href="${detailHref}">Learn More <i class="bi bi-arrow-right"></i></a>
+                <a class="btn-omyra" href="${consultHref}">Book a Consultation</a>
+              </div>
+            </div>
+          </article>
+        </div>`;
+    }).join("");
+    gridEl.insertAdjacentHTML("beforeend", extraHtml);
+  };
+
+  if (window.OMYRA_GROUP5 && Array.isArray(window.OMYRA_GROUP5.subcategories)) {
+    window.OMYRA_GROUP5.subcategories.forEach((sub) => {
+      renderGroup5Cards(document.querySelector(`[data-g5-grid="${sub.id}"]`), sub, "");
+      const detailGrid = document.querySelector(`[data-g5-detail-grid="${sub.id}"]`);
+      if (detailGrid && sub.services.length > 0) {
+        const emptyNote = document.querySelector(`[data-g5-empty-note="${sub.id}"]`);
+        if (emptyNote) emptyNote.classList.add("d-none");
+        renderGroup5Cards(detailGrid, sub, "../../");
+      }
+    });
+  }
+
   const catalog = $("#servicesCatalog");
   if (catalog) {
     const pills = $$(".filter-pill", $("#serviceFilterPills"));
@@ -112,7 +154,7 @@
     const sections = $$(".service-category-section", catalog);
     let activeCat = "all";
 
-    const updateCatalog = (scrollToCat = false) => {
+    const updateCatalog = (scrollTargetId = "") => {
       const q = (searchInput ? searchInput.value : "").trim().toLowerCase();
       if (clearBtn) clearBtn.classList.toggle("d-none", !q);
       let visibleTotal = 0;
@@ -130,6 +172,11 @@
             visibleTotal++;
           }
         });
+        // Also hide empty Group 5 subcategory blocks during search
+        $$(".g5-subcat-block", sec).forEach((blk) => {
+          const anyVis = $$(".service-item:not(.is-hidden)", blk).length > 0;
+          blk.classList.toggle("d-none", !anyVis);
+        });
         sec.classList.toggle("is-hidden", secVisible === 0);
       });
 
@@ -141,23 +188,25 @@
 
       if (countEl) {
         countEl.textContent = q
-          ? `Showing ${visibleTotal} of 47 services for "${searchInput.value.trim()}"`
+          ? `Showing ${visibleTotal} matching listings for "${searchInput.value.trim()}"`
           : activeCat === "all"
-            ? `Showing all 47 services across 4 categories`
-            : `Showing ${visibleTotal} services`;
+            ? `Showing all 47 brochure services + YONIVEDA & GARBHA SANSKAR across 5 treatment groups`
+            : activeCat === "yoniveda-garbha-sanskar"
+              ? `Showing Group 5 – YONIVEDA & GARBHA SANSKAR`
+              : `Showing ${visibleTotal} services`;
       }
       if (emptyEl) emptyEl.classList.toggle("d-none", visibleTotal > 0);
 
-      if (scrollToCat && activeCat !== "all") {
-        const targetSec = document.getElementById(activeCat);
-        if (targetSec) setTimeout(() => targetSec.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+      if (scrollTargetId) {
+        const targetEl = document.getElementById(scrollTargetId);
+        if (targetEl) setTimeout(() => targetEl.scrollIntoView({ behavior: "smooth", block: "start" }), 70);
       }
     };
 
     pills.forEach((btn) => {
       btn.addEventListener("click", () => {
         activeCat = btn.dataset.catFilter;
-        updateCatalog(false);
+        updateCatalog("");
         if (activeCat === "all") {
           history.replaceState(null, "", "treatments.html");
         } else {
@@ -167,12 +216,12 @@
     });
 
     if (searchInput) {
-      searchInput.addEventListener("input", () => updateCatalog(false));
+      searchInput.addEventListener("input", () => updateCatalog(""));
     }
     if (clearBtn) {
       clearBtn.addEventListener("click", () => {
         searchInput.value = "";
-        updateCatalog(false);
+        updateCatalog("");
         searchInput.focus();
       });
     }
@@ -180,18 +229,21 @@
       resetBtn.addEventListener("click", () => {
         activeCat = "all";
         if (searchInput) searchInput.value = "";
-        updateCatalog(false);
+        updateCatalog("");
       });
     }
 
     const applyHash = () => {
       const h = location.hash.replace("#", "");
-      if (h && pills.some((b) => b.dataset.catFilter === h)) {
+      if (h === "yoniveda" || h === "garbha-sanskar") {
+        activeCat = "yoniveda-garbha-sanskar";
+        updateCatalog(h);
+      } else if (h && pills.some((b) => b.dataset.catFilter === h)) {
         activeCat = h;
-        updateCatalog(true);
+        updateCatalog(h);
       } else {
         activeCat = "all";
-        updateCatalog(false);
+        updateCatalog("");
       }
     };
     applyHash();
@@ -201,8 +253,12 @@
   /* Reusable Service Detail Page renderer (service-detail.html) */
   const detailRoot = $("#serviceDetailRoot");
   if (detailRoot && Array.isArray(window.OMYRA_SERVICES)) {
+    const extraG5 = (window.OMYRA_GROUP5 && Array.isArray(window.OMYRA_GROUP5.subcategories))
+      ? window.OMYRA_GROUP5.subcategories.flatMap((s) => s.services || [])
+      : [];
+    const combinedServices = window.OMYRA_SERVICES.concat(extraG5);
     const slug = new URLSearchParams(location.search).get("service");
-    const srv = window.OMYRA_SERVICES.find((s) => s.slug === slug) || window.OMYRA_SERVICES[0];
+    const srv = combinedServices.find((s) => s.slug === slug) || window.OMYRA_SERVICES[0];
     const cat = (window.OMYRA_CATEGORIES || []).find((c) => c.id === srv.category);
 
     document.title = `${srv.name} – OMYRA | ${srv.categoryLabel}`;
@@ -480,5 +536,61 @@
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeMega(true);
     });
+  }
+
+  /* Styled Video Testimonials: hover preview + theatre modal player */
+  const vCards = $$(".vtest-card");
+  const vModalEl = $("#videoTestimonialModal");
+  if (vCards.length) {
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const vModal = vModalEl && window.bootstrap ? new bootstrap.Modal(vModalEl) : null;
+    const modalVideo = $("#vtestModalVideo");
+
+    const openVideoCard = (card) => {
+      if (!vModal || !modalVideo) return;
+      const d = card.dataset;
+      const setText = (sel, val) => { const el = $(sel); if (el) el.textContent = val || ""; };
+      setText("#vtestModalCat", d.videoCat);
+      setText("#vtestModalQuote", d.videoQuote);
+      setText("#vtestModalTitle", d.videoClient);
+      setText("#vtestModalRole", d.videoRole);
+      const av = $("#vtestModalAvatar");
+      if (av && d.videoAvatar) { av.src = d.videoAvatar; av.alt = d.videoClient || "OMYRA Client"; }
+      const bk = $("#vtestModalBook");
+      if (bk) bk.href = d.videoSlug ? `consultation.html?treatment=${encodeURIComponent(d.videoSlug)}` : "consultation.html";
+      modalVideo.poster = d.videoPoster || "";
+      modalVideo.src = d.videoSrc || "";
+      modalVideo.currentTime = 0;
+      vModal.show();
+      modalVideo.play().catch(() => {});
+    };
+
+    vCards.forEach((card) => {
+      const previewVid = $("video", card);
+      if (previewVid && !reduceMotion) {
+        card.addEventListener("mouseenter", () => {
+          if (window.innerWidth >= 992) previewVid.play().catch(() => {});
+        });
+        card.addEventListener("mouseleave", () => {
+          previewVid.pause();
+          previewVid.currentTime = 0;
+        });
+      }
+      card.addEventListener("click", () => openVideoCard(card));
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openVideoCard(card);
+        }
+      });
+    });
+
+    if (vModalEl && modalVideo) {
+      vModalEl.addEventListener("hidden.bs.modal", () => {
+        modalVideo.pause();
+        modalVideo.removeAttribute("src");
+        modalVideo.load();
+      });
+    }
   }
 })();

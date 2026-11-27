@@ -11,7 +11,7 @@ window.OMYRA_CATEGORIES = [
     subtitle: "Hair, Skin & Signature Grooming",
     description: "Tailored hairstyling, nourishing scalp rituals, classic beauty care and occasion-ready styling delivered in a calm, luxury salon setting.",
     icon: "bi-scissors",
-    homeImg: "assets/img/service-haircare.jpg?v=24",
+    homeImg: "assets/img/cat-salon-services.jpg?v=37",
     count: 14
   },
   {
@@ -22,7 +22,7 @@ window.OMYRA_CATEGORIES = [
     subtitle: "Dermatologist-Guided Skin, Hair & Body Care",
     description: "Evidence-guided clinical aesthetics combining personalised assessments, advanced devices and gentle protocols tailored to your skin and hair goals.",
     icon: "bi-stars",
-    homeImg: "assets/img/service-skincare.jpg?v=24",
+    homeImg: "assets/img/cat-aesthetic-clinic.jpg?v=37",
     count: 13
   },
   {
@@ -33,7 +33,7 @@ window.OMYRA_CATEGORIES = [
     subtitle: "Precision Micropigmentation & Natural Definition",
     description: "Thoughtfully mapped brow, lip, eye and corrective micropigmentation performed with sterile single-use pigments for soft, natural-looking definition.",
     icon: "bi-brush",
-    homeImg: "assets/img/service-aesthetics.jpg?v=24",
+    homeImg: "assets/img/cat-semi-permanent-makeup.jpg?v=37",
     count: 9
   },
   {
@@ -44,7 +44,7 @@ window.OMYRA_CATEGORIES = [
     subtitle: "Luxury Manicures, Extensions & Custom Nail Art",
     description: "Hygienic hand and foot care, durable gel and acrylic enhancements, restorative nail spa rituals and bespoke artistic finishes.",
     icon: "bi-gem",
-    homeImg: "assets/img/service-wellness.jpg?v=24",
+    homeImg: "assets/img/cat-nail-bar.jpg?v=37",
     count: 11
   }
 ];
@@ -865,3 +865,56 @@ window.OMYRA_SERVICES = [
     ]
   }
 ];
+
+/* ==========================================================================
+   GROUP 5 – YONIVEDA & GARBHA SANSKAR (Extensible Structure)
+   NOTE: Kept separate from the 47 official brochure services above so all 47
+   brochure entries remain untouched. Add client-approved individual service
+   entries to each subcategory's `services` array below to automatically
+   render additional service cards and service-detail pages.
+   ========================================================================== */
+window.OMYRA_GROUP5 = {
+  id: "yoniveda-garbha-sanskar",
+  title: "YONIVEDA & GARBHA SANSKAR",
+  subtitle: "Dedicated Women's Wellness & Prenatal Care",
+  subcategories: [
+    {
+      id: "yoniveda",
+      name: "YONIVEDA",
+      tag: "Women's Wellness",
+      detailUrl: "treatments/yoniveda-garbha-sanskar/yoniveda.html",
+      consultationSlug: "yoniveda",
+      img: "assets/img/services/yoniveda-wellness.jpg",
+      secondaryImg: "assets/img/services/yoniveda-sanctuary.jpg",
+      shortDesc: "A dedicated women's wellness category at OMYRA. Individual programme details are provided during a private consultation and updated with client-approved service listings.",
+      /* Add client-approved YONIVEDA service objects here:
+         {
+           slug: "client-approved-slug",
+           category: "yoniveda-garbha-sanskar",
+           subcategory: "yoniveda",
+           categoryLabel: "YONIVEDA",
+           name: "Client-Approved Service Name",
+           shortDesc: "Client-approved short description.",
+           overview: "Client-approved overview.",
+           img: "assets/img/services/yoniveda-wellness.jpg",
+           sessionInfo: "Private 1-on-1 session",
+           approach: "Personalised consultation",
+           highlights: []
+         }
+      */
+      services: []
+    },
+    {
+      id: "garbha-sanskar",
+      name: "GARBHA SANSKAR",
+      tag: "Pregnancy Wellness & Prenatal Care",
+      detailUrl: "treatments/yoniveda-garbha-sanskar/garbha-sanskar.html",
+      consultationSlug: "garbha-sanskar",
+      img: "assets/img/services/garbha-sanskar-prenatal.jpg",
+      secondaryImg: "assets/img/services/garbha-sanskar-care.jpg",
+      shortDesc: "A dedicated pregnancy wellness and prenatal care category at OMYRA. Individual programme details are shared during a personal consultation and updated with client-approved service listings.",
+      /* Add client-approved GARBHA SANSKAR service objects here following the same schema above. */
+      services: []
+    }
+  ]
+};
